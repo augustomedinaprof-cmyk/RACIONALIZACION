@@ -246,6 +246,7 @@
 
 <script>
 (() => {
+  // Todos los radicandos usados son libres de cuadrados perfectos.
   const roots = [2,3,5,6,7,10,11,13,14,15,17,19];
   const easyRoots = [2,3,5,6,7,10];
   const $ = s => document.querySelector(s);
@@ -278,29 +279,59 @@
     if(c===0) return '0';
     if(r===1) return String(c);
     if(c===1) return `√${r}`;
-    if(c===-1) return `-√${r}`;
+    if(c===-1) return `−√${r}`;
     return `${c}√${r}`;
   }
   function frac(n,d){
-    if(d===1) return n;
+    if(d===1) return String(n);
     return `${n}/${d}`;
   }
-  function uniqueShuffle(items){
-    const a=[...new Set(items)];
+  function almostEqual(a,b){
+    return Math.abs(a-b) < 1e-9;
+  }
+  function shuffle(a){
+    a=[...a];
     for(let i=a.length-1;i>0;i--){
       const j=Math.floor(Math.random()*(i+1));
       [a[i],a[j]]=[a[j],a[i]];
     }
     return a;
   }
-  function fillWrong(correct, candidates){
-    let arr=uniqueShuffle([correct,...candidates]).filter(Boolean);
-    const fallback = [
-      `√${rand(easyRoots)}`, `${int(2,9)}√${rand(easyRoots)}`,
-      `${int(1,9)}/${int(2,11)}`, `${int(1,7)}√${rand(easyRoots)}/${int(2,11)}`
-    ];
-    arr=uniqueShuffle([...arr,...fallback]);
-    return arr.slice(0,4).sort(()=>Math.random()-.5);
+
+  /*
+    MUY IMPORTANTE:
+    Cada opción guarda también su valor numérico.
+    Así evitamos mostrar como "incorrecta" otra expresión que sea
+    algebraicamente equivalente a la respuesta correcta.
+  */
+  function makeOptions(correctText, correctValue, candidates){
+    const options = [{text:correctText, value:correctValue, correct:true}];
+
+    for(const c of candidates){
+      if(!c || !Number.isFinite(c.value)) continue;
+      if(almostEqual(c.value, correctValue)) continue;
+      if(options.some(o => o.text===c.text || almostEqual(o.value,c.value))) continue;
+      options.push({text:c.text, value:c.value, correct:false});
+      if(options.length===4) break;
+    }
+
+    // Opciones de reserva, también verificadas numéricamente.
+    let guard=0;
+    while(options.length<4 && guard<100){
+      guard++;
+      const r=rand(easyRoots);
+      const n=int(1,9);
+      const d=int(2,11);
+      const c={
+        text:`${n}√${r}/${d}`,
+        value:n*Math.sqrt(r)/d
+      };
+      if(almostEqual(c.value,correctValue)) continue;
+      if(options.some(o => o.text===c.text || almostEqual(o.value,c.value))) continue;
+      options.push({...c,correct:false});
+    }
+
+    return shuffle(options);
   }
 
   function basic(){
@@ -308,19 +339,24 @@
     const b=rand(roots);
     const [n,d]=simplifyFrac(a,b);
     const correct=frac(coeffRad(n,b),d);
+    const cv=a/Math.sqrt(b);
+
+    const candidates=[
+      {text:coeffRad(a,b), value:a*Math.sqrt(b)},
+      {text:frac(String(a),b), value:a/b},
+      {text:frac(coeffRad(a,b),b*b), value:a*Math.sqrt(b)/(b*b)},
+      {text:frac(coeffRad(a,b),Math.max(1,b-1)), value:a*Math.sqrt(b)/Math.max(1,b-1)},
+      {text:frac(coeffRad(b,a),b), value:Math.sqrt(a)}
+    ];
+
     return {
       level:'Nivel 1 · Básico',
       q:`${a}/√${b}`,
       correct,
+      correctValue:cv,
       hint:`Multiplicá numerador y denominador por √${b}. Así, √${b}·√${b} = ${b}.`,
       explanation:`${a}/√${b} · √${b}/√${b} = ${a}√${b}/${b}${gcd(a,b)>1 ? ` = ${correct}` : ''}.`,
-      options: fillWrong(correct,[
-        frac(coeffRad(a,b),1),
-        frac(String(a),b),
-        frac(coeffRad(a,b),b*b),
-        frac(coeffRad(a,b),Math.max(1,b-1)),
-        frac(coeffRad(b,a),b)
-      ])
+      options:makeOptions(correct,cv,candidates)
     };
   }
 
@@ -330,19 +366,25 @@
     const b=rand(easyRoots);
     const [n,d]=simplifyFrac(a,c*b);
     const correct=frac(coeffRad(n,b),d);
+    const cv=a/(c*Math.sqrt(b));
+
+    const candidates=[
+      {text:frac(coeffRad(a,b),c), value:a*Math.sqrt(b)/c},
+      {text:frac(coeffRad(a,b),c*b), value:a*Math.sqrt(b)/(c*b)}, // se elimina si equivale a la correcta
+      {text:frac(coeffRad(a,b),b), value:a*Math.sqrt(b)/b},
+      {text:frac(coeffRad(a*c,b),c*b), value:(a*c*Math.sqrt(b))/(c*b)},
+      {text:frac(String(a),c*b), value:a/(c*b)},
+      {text:frac(coeffRad(a,b),c+b), value:a*Math.sqrt(b)/(c+b)}
+    ];
+
     return {
       level:'Nivel 2 · Intermedio',
       q:`${a}/(${c}√${b})`,
       correct,
+      correctValue:cv,
       hint:`Multiplicá arriba y abajo por √${b}. El denominador queda ${c}·${b} = ${c*b}. Después simplificá.`,
       explanation:`${a}/(${c}√${b}) · √${b}/√${b} = ${a}√${b}/${c*b}${gcd(a,c*b)>1 ? ` = ${correct}` : ''}.`,
-      options: fillWrong(correct,[
-        frac(coeffRad(a,b),c),
-        frac(coeffRad(a,b),c*b),
-        frac(coeffRad(a,b),b),
-        frac(coeffRad(a*c,b),c*b),
-        frac(String(a),c*b)
-      ])
+      options:makeOptions(correct,cv,candidates)
     };
   }
 
@@ -351,24 +393,45 @@
     let n=rand([2,3,5,6,7]);
     while(m===n) n=rand([2,3,5,6,7]);
     if(m<n) [m,n]=[n,m];
+
     const a=int(1,6);
     const den=m-n;
     const [k,d]=simplifyFrac(a,den);
-    const num = k===1 ? `(√${m} − √${n})` : `${k}(√${m} − √${n})`;
-    const correct=frac(num,d);
+    const numerator = k===1 ? `(√${m} − √${n})` : `${k}(√${m} − √${n})`;
+    const correct=frac(numerator,d);
+    const cv=a/(Math.sqrt(m)+Math.sqrt(n));
+
+    const candidates=[
+      {
+        text:frac(`${a}(√${m} + √${n})`,den),
+        value:a*(Math.sqrt(m)+Math.sqrt(n))/den
+      },
+      {
+        text:frac(`${a}(√${m} − √${n})`,m+n),
+        value:a*(Math.sqrt(m)-Math.sqrt(n))/(m+n)
+      },
+      {
+        text:frac(`${a}(√${m} + √${n})`,m+n),
+        value:a*(Math.sqrt(m)+Math.sqrt(n))/(m+n)
+      },
+      {
+        text:frac(`${a}(√${n} − √${m})`,den),
+        value:a*(Math.sqrt(n)-Math.sqrt(m))/den
+      },
+      {
+        text:`${a}(√${m} − √${n})`,
+        value:a*(Math.sqrt(m)-Math.sqrt(n))
+      }
+    ];
+
     return {
       level:'Nivel 3 · Avanzado',
       q:`${a}/(√${m} + √${n})`,
       correct,
+      correctValue:cv,
       hint:`Usá el conjugado: √${m} − √${n}. Recordá: (A+B)(A−B)=A²−B².`,
-      explanation:`Multiplicando por el conjugado: ${a}(√${m} − √${n}) / (${m} − ${n}) = ${correct}.`,
-      options: fillWrong(correct,[
-        frac(`${a}(√${m} + √${n})`,den),
-        frac(`${a}(√${m} − √${n})`,m+n),
-        frac(`${a}(√${m} + √${n})`,m+n),
-        frac(`${a}(√${n} − √${m})`,den),
-        `${a}(√${m} − √${n})`
-      ])
+      explanation:`${a}/(√${m}+√${n}) · (√${m}−√${n})/(√${m}−√${n}) = ${a}(√${m}−√${n})/(${m}−${n}) = ${correct}.`,
+      options:makeOptions(correct,cv,candidates)
     };
   }
 
@@ -377,28 +440,59 @@
     let q=rand([2,3,5,6,7,10,11,13]);
     while(p*p===q) q=rand(roots);
     const a=int(1,6);
-    let den=p*p-q;
-    let sign = den<0 ? -1 : 1;
-    den=Math.abs(den);
-    let numCoeff=a*sign;
-    const [k,d]=simplifyFrac(numCoeff,den);
-    const inner = k===1 ? `(${p} − √${q})`
-                : k===-1 ? `(√${q} − ${p})`
-                : `${k}(${p} − √${q})`;
-    const correct=frac(inner,d);
+
+    const rawDen=p*p-q;
+    const den=Math.abs(rawDen);
+
+    // Si p²-q es negativo, cambiamos ambos signos para que el denominador quede positivo.
+    const baseCoeff = a;
+    const [k,d]=simplifyFrac(baseCoeff,den);
+
+    let numerator;
+    if(rawDen>0){
+      numerator = k===1 ? `(${p} − √${q})` : `${k}(${p} − √${q})`;
+    }else{
+      numerator = k===1 ? `(√${q} − ${p})` : `${k}(√${q} − ${p})`;
+    }
+
+    const correct=frac(numerator,d);
+    const cv=a/(p+Math.sqrt(q));
+
+    const candidates=[
+      {
+        text:frac(`${a}(${p} + √${q})`,den),
+        value:a*(p+Math.sqrt(q))/den
+      },
+      {
+        text:frac(`${a}(${p} − √${q})`,p*p+q),
+        value:a*(p-Math.sqrt(q))/(p*p+q)
+      },
+      {
+        text:frac(`${a}(${p} + √${q})`,p*p+q),
+        value:a*(p+Math.sqrt(q))/(p*p+q)
+      },
+      {
+        text:`${a}(${p} − √${q})`,
+        value:a*(p-Math.sqrt(q))
+      },
+      {
+        text:frac(`${a}(√${q} − ${p})`,den),
+        value:a*(Math.sqrt(q)-p)/den
+      }
+    ];
+
+    const signedResolution = rawDen>0
+      ? `${a}(${p} − √${q})/${rawDen}`
+      : `${a}(√${q} − ${p})/${-rawDen}`;
+
     return {
       level:'Nivel 3 · Avanzado',
       q:`${a}/(${p} + √${q})`,
       correct,
-      hint:`Multiplicá por el conjugado ${p} − √${q}. El denominador será ${p}² − (√${q})².`,
-      explanation:`${a}(${p} − √${q}) / (${p*p} − ${q}) = ${correct}.`,
-      options: fillWrong(correct,[
-        frac(`${a}(${p} + √${q})`,Math.abs(p*p-q)),
-        frac(`${a}(${p} − √${q})`,p*p+q),
-        frac(`${a}(${p} + √${q})`,p*p+q),
-        `${a}(${p} − √${q})`,
-        frac(`${a}(√${q} − ${p})`,Math.abs(p*p-q))
-      ])
+      correctValue:cv,
+      hint:`Multiplicá por el conjugado ${p} − √${q}. El denominador será ${p}² − (√${q})² = ${rawDen}.`,
+      explanation:`${a}/(${p}+√${q}) · (${p}−√${q})/(${p}−√${q}) = ${a}(${p}−√${q})/(${p*p}−${q}) = ${signedResolution}${signedResolution!==correct ? ` = ${correct}` : ''}.`,
+      options:makeOptions(correct,cv,candidates)
     };
   }
 
@@ -417,6 +511,7 @@
       const r=Math.random();
       ex = r<.38 ? basic() : r<.72 ? intermediate() : (Math.random()<.5 ? advancedRoots() : advancedInteger());
     }
+
     state.current=ex;
     $('#typeTag').textContent=ex.level;
     $('#question').textContent=`Racionalizá:  ${ex.q}`;
@@ -429,7 +524,8 @@
     ex.options.forEach(opt=>{
       const b=document.createElement('button');
       b.className='opt';
-      b.textContent=opt;
+      b.textContent=opt.text;
+      b.dataset.correct=opt.correct ? '1':'0';
       b.addEventListener('click',()=>answer(opt,b));
       box.appendChild(b);
     });
@@ -438,13 +534,14 @@
   function answer(opt,btn){
     if(state.answered) return;
     state.answered=true;
+
     const buttons=[...document.querySelectorAll('.opt')];
     buttons.forEach(b=>{
       b.disabled=true;
-      if(b.textContent===state.current.correct) b.classList.add('correct');
+      if(b.dataset.correct==='1') b.classList.add('correct');
     });
 
-    if(opt===state.current.correct){
+    if(opt.correct){
       state.correct++;
       state.streak++;
       const bonus=Math.min(5,state.streak);
@@ -484,15 +581,21 @@
     h.textContent='💡 Pista: '+state.current.hint;
     h.style.display = h.style.display==='block' ? 'none' : 'block';
   });
+
   $('#newBtn').addEventListener('click',generate);
+
   $('#resetBtn').addEventListener('click',()=>{
     state.points=state.correct=state.wrong=state.streak=0;
-    save(); updateStats(); generate();
+    save();
+    updateStats();
+    generate();
   });
+
   $('#level').addEventListener('change',()=>{
     localStorage.setItem('rat_level',$('#level').value);
     generate();
   });
+
   $('#student').addEventListener('input',()=>{
     localStorage.setItem('rat_student',$('#student').value.trim());
   });
