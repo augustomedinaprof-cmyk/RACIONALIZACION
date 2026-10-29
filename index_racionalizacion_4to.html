@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#1f4f8a" />
+  <title>Racionalización | 4.º Año</title>
+  <style>
+    :root{
+      --bg:#f4f7fb;
+      --card:#ffffff;
+      --text:#172033;
+      --muted:#667085;
+      --primary:#1f4f8a;
+      --primary2:#2f6fb7;
+      --ok:#18794e;
+      --bad:#b42318;
+      --warn:#a15c00;
+      --border:#d9e2ef;
+      --shadow:0 12px 30px rgba(25,50,90,.10);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(47,111,183,.12), transparent 28rem),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+    header{
+      background:linear-gradient(135deg,var(--primary),#15395f);
+      color:#fff;
+      padding:24px 18px 30px;
+      box-shadow:var(--shadow);
+    }
+    .wrap{max-width:980px;margin:auto}
+    h1{margin:0;font-size:clamp(1.8rem,4vw,2.8rem);line-height:1.1}
+    header p{margin:10px 0 0;color:#e6eef8;font-size:1rem}
+    .top-grid{
+      display:grid;
+      grid-template-columns:1.15fr .85fr;
+      gap:18px;
+      margin-top:-18px;
+      padding:0 18px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:20px;
+      box-shadow:var(--shadow);
+      padding:20px;
+    }
+    .controls{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+    label{font-weight:700;font-size:.9rem}
+    input,select,button{
+      width:100%;
+      border-radius:12px;
+      border:1px solid var(--border);
+      padding:12px 14px;
+      font-size:1rem;
+    }
+    select,input{background:#fff;color:var(--text)}
+    button{
+      cursor:pointer;
+      font-weight:800;
+      transition:.18s ease;
+    }
+    button:hover{transform:translateY(-1px)}
+    .primary{background:var(--primary);border-color:var(--primary);color:#fff}
+    .secondary{background:#eef4fb;color:var(--primary);border-color:#cfe0f2}
+    .ghost{background:#fff;color:var(--text)}
+    .stats{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+      margin-top:12px;
+    }
+    .stat{
+      text-align:center;
+      background:#f8fafc;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px 8px;
+    }
+    .stat b{display:block;font-size:1.35rem;color:var(--primary)}
+    .stat span{font-size:.78rem;color:var(--muted)}
+    main{padding:18px}
+    .exercise{
+      margin-top:18px;
+      padding:24px;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      background:#eef4fb;
+      color:var(--primary);
+      border-radius:999px;
+      padding:7px 10px;
+      font-weight:800;
+      font-size:.8rem;
+    }
+    .question{
+      font-size:clamp(1.35rem,3vw,2rem);
+      font-weight:800;
+      margin:24px 0 10px;
+      text-align:center;
+      min-height:48px;
+    }
+    .instruction{text-align:center;color:var(--muted);margin-bottom:18px}
+    .options{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+    .opt{
+      background:#fff;
+      min-height:64px;
+      border:2px solid var(--border);
+      color:var(--text);
+      font-size:1.08rem;
+    }
+    .opt:hover:not(:disabled){border-color:var(--primary2);background:#f7fbff}
+    .opt.correct{border-color:var(--ok);background:#ecfdf3;color:#0d5b39}
+    .opt.wrong{border-color:var(--bad);background:#fff1f0;color:#8a1c13}
+    .opt:disabled{cursor:default;opacity:1}
+    .feedback{
+      display:none;
+      margin-top:16px;
+      border-radius:14px;
+      padding:14px 16px;
+      line-height:1.45;
+      font-weight:650;
+    }
+    .feedback.ok{display:block;background:#ecfdf3;color:#0d5b39;border:1px solid #b7e4ca}
+    .feedback.bad{display:block;background:#fff1f0;color:#8a1c13;border:1px solid #f2b8b5}
+    .help{
+      display:none;
+      margin-top:12px;
+      background:#fff8e8;
+      color:#6b4300;
+      border:1px solid #f3d48e;
+      border-radius:14px;
+      padding:14px 16px;
+      line-height:1.5;
+    }
+    .actions{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:10px;
+      margin-top:16px;
+    }
+    .mini-title{font-size:1rem;margin:0 0 10px}
+    .rules{color:var(--muted);line-height:1.55;font-size:.94rem}
+    .rules strong{color:var(--text)}
+    footer{
+      text-align:center;
+      color:var(--muted);
+      padding:8px 18px 28px;
+      font-size:.84rem;
+    }
+    .hidden{display:none!important}
+    @media(max-width:760px){
+      .top-grid{grid-template-columns:1fr;margin-top:-12px}
+      .controls{grid-template-columns:1fr}
+      .stats{grid-template-columns:repeat(2,1fr)}
+      .options{grid-template-columns:1fr}
+      .actions{grid-template-columns:1fr}
+      .exercise{padding:18px}
+      header{padding-bottom:24px}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Racionalización · 4.º Año</h1>
+    <p>Práctica infinita con ejercicios aleatorios, corrección inmediata y explicación paso a paso.</p>
+  </div>
+</header>
+
+<section class="top-grid wrap">
+  <div class="card">
+    <div class="controls">
+      <div>
+        <label for="student">Nombre del alumno</label>
+        <input id="student" placeholder="Escribí tu nombre" autocomplete="name">
+      </div>
+      <div>
+        <label for="level">Nivel</label>
+        <select id="level">
+          <option value="all">Mezclado</option>
+          <option value="basic">Nivel 1 · Básico</option>
+          <option value="intermediate">Nivel 2 · Intermedio</option>
+          <option value="advanced">Nivel 3 · Avanzado</option>
+        </select>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="points">0</b><span>Puntos</span></div>
+      <div class="stat"><b id="correct">0</b><span>Correctas</span></div>
+      <div class="stat"><b id="wrong">0</b><span>Incorrectas</span></div>
+      <div class="stat"><b id="streak">0</b><span>Racha</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 class="mini-title">¿Qué practica esta app?</h3>
+    <div class="rules">
+      <strong>Nivel 1:</strong> denominadores con una raíz.<br>
+      <strong>Nivel 2:</strong> coeficiente por raíz en el denominador.<br>
+      <strong>Nivel 3:</strong> denominadores binomiales usando el conjugado.<br><br>
+      Los ejercicios se generan de forma <strong>aleatoria e ilimitada</strong>.
+    </div>
+  </div>
+</section>
+
+<main class="wrap">
+  <section class="card exercise">
+    <span class="tag" id="typeTag">Nivel 1 · Básico</span>
+    <div class="question" id="question">Cargando ejercicio…</div>
+    <div class="instruction">Elegí la respuesta racionalizada y simplificada.</div>
+
+    <div class="options" id="options"></div>
+
+    <div id="feedback" class="feedback"></div>
+    <div id="help" class="help"></div>
+
+    <div class="actions">
+      <button class="secondary" id="hintBtn">💡 Ver pista</button>
+      <button class="primary" id="newBtn">🎲 Nuevo ejercicio</button>
+      <button class="ghost" id="resetBtn">↺ Reiniciar puntaje</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Recurso de práctica de Matemática · Racionalización · 4.º año
+</footer>
+
+<script>
+(() => {
+  const roots = [2,3,5,6,7,10,11,13,14,15,17,19];
+  const easyRoots = [2,3,5,6,7,10];
+  const $ = s => document.querySelector(s);
+
+  const state = {
+    points: Number(localStorage.getItem('rat_points') || 0),
+    correct: Number(localStorage.getItem('rat_correct') || 0),
+    wrong: Number(localStorage.getItem('rat_wrong') || 0),
+    streak: Number(localStorage.getItem('rat_streak') || 0),
+    current: null,
+    answered: false
+  };
+
+  $('#student').value = localStorage.getItem('rat_student') || '';
+  $('#level').value = localStorage.getItem('rat_level') || 'all';
+
+  function rand(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+  function int(min,max){ return Math.floor(Math.random()*(max-min+1))+min }
+  function gcd(a,b){
+    a=Math.abs(a); b=Math.abs(b);
+    while(b){ [a,b]=[b,a%b] }
+    return a || 1;
+  }
+  function simplifyFrac(n,d){
+    if(d<0){ n=-n; d=-d }
+    const g=gcd(n,d);
+    return [n/g,d/g];
+  }
+  function coeffRad(c,r){
+    if(c===0) return '0';
+    if(r===1) return String(c);
+    if(c===1) return `√${r}`;
+    if(c===-1) return `-√${r}`;
+    return `${c}√${r}`;
+  }
+  function frac(n,d){
+    if(d===1) return n;
+    return `${n}/${d}`;
+  }
+  function uniqueShuffle(items){
+    const a=[...new Set(items)];
+    for(let i=a.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [a[i],a[j]]=[a[j],a[i]];
+    }
+    return a;
+  }
+  function fillWrong(correct, candidates){
+    let arr=uniqueShuffle([correct,...candidates]).filter(Boolean);
+    const fallback = [
+      `√${rand(easyRoots)}`, `${int(2,9)}√${rand(easyRoots)}`,
+      `${int(1,9)}/${int(2,11)}`, `${int(1,7)}√${rand(easyRoots)}/${int(2,11)}`
+    ];
+    arr=uniqueShuffle([...arr,...fallback]);
+    return arr.slice(0,4).sort(()=>Math.random()-.5);
+  }
+
+  function basic(){
+    const a=int(1,9);
+    const b=rand(roots);
+    const [n,d]=simplifyFrac(a,b);
+    const correct=frac(coeffRad(n,b),d);
+    return {
+      level:'Nivel 1 · Básico',
+      q:`${a}/√${b}`,
+      correct,
+      hint:`Multiplicá numerador y denominador por √${b}. Así, √${b}·√${b} = ${b}.`,
+      explanation:`${a}/√${b} · √${b}/√${b} = ${a}√${b}/${b}${gcd(a,b)>1 ? ` = ${correct}` : ''}.`,
+      options: fillWrong(correct,[
+        frac(coeffRad(a,b),1),
+        frac(String(a),b),
+        frac(coeffRad(a,b),b*b),
+        frac(coeffRad(a,b),Math.max(1,b-1)),
+        frac(coeffRad(b,a),b)
+      ])
+    };
+  }
+
+  function intermediate(){
+    const a=int(2,12);
+    const c=int(2,6);
+    const b=rand(easyRoots);
+    const [n,d]=simplifyFrac(a,c*b);
+    const correct=frac(coeffRad(n,b),d);
+    return {
+      level:'Nivel 2 · Intermedio',
+      q:`${a}/(${c}√${b})`,
+      correct,
+      hint:`Multiplicá arriba y abajo por √${b}. El denominador queda ${c}·${b} = ${c*b}. Después simplificá.`,
+      explanation:`${a}/(${c}√${b}) · √${b}/√${b} = ${a}√${b}/${c*b}${gcd(a,c*b)>1 ? ` = ${correct}` : ''}.`,
+      options: fillWrong(correct,[
+        frac(coeffRad(a,b),c),
+        frac(coeffRad(a,b),c*b),
+        frac(coeffRad(a,b),b),
+        frac(coeffRad(a*c,b),c*b),
+        frac(String(a),c*b)
+      ])
+    };
+  }
+
+  function advancedRoots(){
+    let m=rand([3,5,6,7,10,11,13]);
+    let n=rand([2,3,5,6,7]);
+    while(m===n) n=rand([2,3,5,6,7]);
+    if(m<n) [m,n]=[n,m];
+    const a=int(1,6);
+    const den=m-n;
+    const [k,d]=simplifyFrac(a,den);
+    const num = k===1 ? `(√${m} − √${n})` : `${k}(√${m} − √${n})`;
+    const correct=frac(num,d);
+    return {
+      level:'Nivel 3 · Avanzado',
+      q:`${a}/(√${m} + √${n})`,
+      correct,
+      hint:`Usá el conjugado: √${m} − √${n}. Recordá: (A+B)(A−B)=A²−B².`,
+      explanation:`Multiplicando por el conjugado: ${a}(√${m} − √${n}) / (${m} − ${n}) = ${correct}.`,
+      options: fillWrong(correct,[
+        frac(`${a}(√${m} + √${n})`,den),
+        frac(`${a}(√${m} − √${n})`,m+n),
+        frac(`${a}(√${m} + √${n})`,m+n),
+        frac(`${a}(√${n} − √${m})`,den),
+        `${a}(√${m} − √${n})`
+      ])
+    };
+  }
+
+  function advancedInteger(){
+    const p=int(2,6);
+    let q=rand([2,3,5,6,7,10,11,13]);
+    while(p*p===q) q=rand(roots);
+    const a=int(1,6);
+    let den=p*p-q;
+    let sign = den<0 ? -1 : 1;
+    den=Math.abs(den);
+    let numCoeff=a*sign;
+    const [k,d]=simplifyFrac(numCoeff,den);
+    const inner = k===1 ? `(${p} − √${q})`
+                : k===-1 ? `(√${q} − ${p})`
+                : `${k}(${p} − √${q})`;
+    const correct=frac(inner,d);
+    return {
+      level:'Nivel 3 · Avanzado',
+      q:`${a}/(${p} + √${q})`,
+      correct,
+      hint:`Multiplicá por el conjugado ${p} − √${q}. El denominador será ${p}² − (√${q})².`,
+      explanation:`${a}(${p} − √${q}) / (${p*p} − ${q}) = ${correct}.`,
+      options: fillWrong(correct,[
+        frac(`${a}(${p} + √${q})`,Math.abs(p*p-q)),
+        frac(`${a}(${p} − √${q})`,p*p+q),
+        frac(`${a}(${p} + √${q})`,p*p+q),
+        `${a}(${p} − √${q})`,
+        frac(`${a}(√${q} − ${p})`,Math.abs(p*p-q))
+      ])
+    };
+  }
+
+  function generate(){
+    state.answered=false;
+    $('#feedback').className='feedback';
+    $('#feedback').textContent='';
+    $('#help').style.display='none';
+
+    const level=$('#level').value;
+    let ex;
+    if(level==='basic') ex=basic();
+    else if(level==='intermediate') ex=intermediate();
+    else if(level==='advanced') ex=Math.random()<.5 ? advancedRoots() : advancedInteger();
+    else {
+      const r=Math.random();
+      ex = r<.38 ? basic() : r<.72 ? intermediate() : (Math.random()<.5 ? advancedRoots() : advancedInteger());
+    }
+    state.current=ex;
+    $('#typeTag').textContent=ex.level;
+    $('#question').textContent=`Racionalizá:  ${ex.q}`;
+    renderOptions(ex);
+  }
+
+  function renderOptions(ex){
+    const box=$('#options');
+    box.innerHTML='';
+    ex.options.forEach(opt=>{
+      const b=document.createElement('button');
+      b.className='opt';
+      b.textContent=opt;
+      b.addEventListener('click',()=>answer(opt,b));
+      box.appendChild(b);
+    });
+  }
+
+  function answer(opt,btn){
+    if(state.answered) return;
+    state.answered=true;
+    const buttons=[...document.querySelectorAll('.opt')];
+    buttons.forEach(b=>{
+      b.disabled=true;
+      if(b.textContent===state.current.correct) b.classList.add('correct');
+    });
+
+    if(opt===state.current.correct){
+      state.correct++;
+      state.streak++;
+      const bonus=Math.min(5,state.streak);
+      state.points += 10 + bonus;
+      const f=$('#feedback');
+      f.className='feedback ok';
+      f.innerHTML=`✅ ¡Correcto! +${10+bonus} puntos.<br><strong>Resolución:</strong> ${state.current.explanation}`;
+    }else{
+      state.wrong++;
+      state.streak=0;
+      state.points=Math.max(0,state.points-2);
+      btn.classList.add('wrong');
+      const f=$('#feedback');
+      f.className='feedback bad';
+      f.innerHTML=`❌ Revisá el procedimiento. La respuesta correcta es <strong>${state.current.correct}</strong>.<br><strong>Resolución:</strong> ${state.current.explanation}`;
+    }
+    save();
+    updateStats();
+  }
+
+  function save(){
+    localStorage.setItem('rat_points',state.points);
+    localStorage.setItem('rat_correct',state.correct);
+    localStorage.setItem('rat_wrong',state.wrong);
+    localStorage.setItem('rat_streak',state.streak);
+  }
+
+  function updateStats(){
+    $('#points').textContent=state.points;
+    $('#correct').textContent=state.correct;
+    $('#wrong').textContent=state.wrong;
+    $('#streak').textContent=state.streak;
+  }
+
+  $('#hintBtn').addEventListener('click',()=>{
+    const h=$('#help');
+    h.textContent='💡 Pista: '+state.current.hint;
+    h.style.display = h.style.display==='block' ? 'none' : 'block';
+  });
+  $('#newBtn').addEventListener('click',generate);
+  $('#resetBtn').addEventListener('click',()=>{
+    state.points=state.correct=state.wrong=state.streak=0;
+    save(); updateStats(); generate();
+  });
+  $('#level').addEventListener('change',()=>{
+    localStorage.setItem('rat_level',$('#level').value);
+    generate();
+  });
+  $('#student').addEventListener('input',()=>{
+    localStorage.setItem('rat_student',$('#student').value.trim());
+  });
+
+  updateStats();
+  generate();
+})();
+</script>
+</body>
+</html>
